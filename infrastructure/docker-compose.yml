@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: foodloop_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: foodloop_secret_password
+      POSTGRES_DB: foodloop
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ../database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile.backend
+    container_name: foodloop_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://postgres:foodloop_secret_password@db:5432/foodloop
+      - SUPABASE_URL=https://cskzbogqwiqzwciuviow.supabase.co
+      - SUPABASE_KEY=sb_publishable_KOX8cTLR2U2fv4k3VsTxhA_EvH1QNcN
+      - LLM_PROVIDER=gemini
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../infrastructure/Dockerfile.frontend
+    container_name: foodloop_frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v1
+      - NEXT_PUBLIC_SUPABASE_URL=https://cskzbogqwiqzwciuviow.supabase.co
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_KOX8cTLR2U2fv4k3VsTxhA_EvH1QNcN
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

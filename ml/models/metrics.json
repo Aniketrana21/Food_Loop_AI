@@ -1,0 +1,25 @@
+{
+  "surplus_model": {
+    "algorithm": "XGBoost Regressor",
+    "rmse_kg": 5.986,
+    "mae_kg": 3.61,
+    "r2_score": 0.829,
+    "features": [
+      "business_type",
+      "category",
+      "day_of_week",
+      "is_weekend",
+      "temp_c",
+      "rainfall_mm",
+      "is_rainy",
+      "event_nearby",
+      "planned_covers",
+      "prepared_volume_kg"
+    ]
+  },
+  "risk_model": {
+    "algorithm": "XGBoost Regressor",
+    "mae": 0.0414
+  },
+  "training_samples": 5000
+}

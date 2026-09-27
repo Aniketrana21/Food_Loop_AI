@@ -1,0 +1,33 @@
+{
+  "run_id": "run_20260927_164359",
+  "experiment": "institutional_kitchen_demand_forecasting",
+  "model_version": "xgb-v3",
+  "metrics": {
+    "naive_baseline": {
+      "mae": 188.77,
+      "rmse": 257.77,
+      "mape_pct": 11.47,
+      "r2_score": 0.6816
+    },
+    "moving_average_7d": {
+      "mae": 387.56,
+      "rmse": 463.09,
+      "mape_pct": 30.25,
+      "r2_score": -0.0277
+    },
+    "random_forest": {
+      "mae": 38.44,
+      "rmse": 47.58,
+      "mape_pct": 2.9,
+      "r2_score": 0.9891
+    },
+    "xgboost": {
+      "mae": 39.64,
+      "rmse": 49.32,
+      "mape_pct": 2.98,
+      "r2_score": 0.9883
+    }
+  },
+  "features_logged": 39,
+  "status": "FINISHED"
+}

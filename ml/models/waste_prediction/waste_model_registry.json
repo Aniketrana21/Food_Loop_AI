@@ -1,0 +1,370 @@
+{
+  "model_version": "waste-xgb-v1",
+  "champion_classifier": "XGBoost_Waste_Classifier",
+  "champion_regressor": "XGBoost_Waste_Quantity_Regressor",
+  "training_date": "2026-09-27T19:47:35.777380",
+  "dataset_version": "pre-production-waste-v1.0",
+  "dataset_records_count": 1200,
+  "features": [
+    "predicted_demand",
+    "planned_production",
+    "prod_to_demand_ratio",
+    "planned_excess_portions",
+    "attendance",
+    "historical_waste_rate",
+    "historical_waste_kg",
+    "day_of_week",
+    "is_weekend",
+    "is_friday",
+    "sin_dow",
+    "cos_dow",
+    "cat_VEGETABLES",
+    "cat_MEAT_SEAFOOD",
+    "cat_GRAINS_PASTA",
+    "cat_DAIRY",
+    "cat_BAKERY",
+    "cat_PREPARED_SOUP",
+    "item_perishability_index",
+    "item_short_holding_risk",
+    "menu_Classic_Comfort",
+    "menu_Mediterranean",
+    "menu_Asian_Wok",
+    "menu_Carvery_Special",
+    "menu_Global_Plant",
+    "meal_BREAKFAST",
+    "meal_LUNCH",
+    "meal_DINNER",
+    "meal_BANQUET",
+    "meal_COMBO",
+    "season_Fall",
+    "season_Spring",
+    "season_Summer",
+    "season_Winter",
+    "kitchen_Central",
+    "kitchen_North",
+    "kitchen_Executive",
+    "kitchen_Healthcare"
+  ],
+  "features_count": 38,
+  "classifier_metrics": {
+    "logistic_regression": {
+      "accuracy": 0.9667,
+      "roc_auc": 0.9077,
+      "precision": 0.9663,
+      "recall": 1.0,
+      "f1_score": 0.9829
+    },
+    "random_forest": {
+      "accuracy": 0.9556,
+      "roc_auc": 0.8961,
+      "precision": 0.9607,
+      "recall": 0.9942,
+      "f1_score": 0.9771
+    },
+    "xgboost": {
+      "accuracy": 0.9611,
+      "roc_auc": 0.8924,
+      "precision": 0.9609,
+      "recall": 1.0,
+      "f1_score": 0.9801
+    }
+  },
+  "regressor_metrics": {
+    "ridge_regression": {
+      "mae_kg": 4.04,
+      "rmse_kg": 5.39,
+      "mape_pct": 49.36,
+      "r2_score": 0.9177
+    },
+    "random_forest_reg": {
+      "mae_kg": 4.01,
+      "rmse_kg": 5.12,
+      "mape_pct": 50.43,
+      "r2_score": 0.9258
+    },
+    "xgboost_reg": {
+      "mae_kg": 3.88,
+      "rmse_kg": 4.93,
+      "mape_pct": 54.14,
+      "r2_score": 0.9312
+    }
+  },
+  "sample_evaluations": [
+    {
+      "date": "2026-03-14",
+      "food_item": "Tuscan Penne alla Vodka",
+      "food_category": "GRAINS_PASTA",
+      "predicted_demand": 570,
+      "planned_production": 616,
+      "actual_waste_kg": 26.1,
+      "predicted_waste_kg": 27.5,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-15",
+      "food_item": "Steamed Seasonal Market Vegetables",
+      "food_category": "VEGETABLES",
+      "predicted_demand": 556,
+      "planned_production": 591,
+      "actual_waste_kg": 6.5,
+      "predicted_waste_kg": 13.9,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-15",
+      "food_item": "Steamed Saffron Basmati Rice Pilaf",
+      "food_category": "GRAINS_PASTA",
+      "predicted_demand": 604,
+      "planned_production": 630,
+      "actual_waste_kg": 3.5,
+      "predicted_waste_kg": 12.6,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-16",
+      "food_item": "Roasted Mediterranean Ratatouille",
+      "food_category": "VEGETABLES",
+      "predicted_demand": 246,
+      "planned_production": 252,
+      "actual_waste_kg": 0.0,
+      "predicted_waste_kg": 1.5,
+      "waste_probability": 0.06,
+      "risk_level": "LOW"
+    },
+    {
+      "date": "2026-03-16",
+      "food_item": "Artisan Four-Cheese Beef Lasagna",
+      "food_category": "GRAINS_PASTA",
+      "predicted_demand": 417,
+      "planned_production": 435,
+      "actual_waste_kg": 0.5,
+      "predicted_waste_kg": 9.4,
+      "waste_probability": 0.99,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-17",
+      "food_item": "Creamy Wild Mushroom Soup",
+      "food_category": "PREPARED_SOUP",
+      "predicted_demand": 376,
+      "planned_production": 397,
+      "actual_waste_kg": 6.3,
+      "predicted_waste_kg": 10.8,
+      "waste_probability": 0.95,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-17",
+      "food_item": "Herb-Crusted Atlantic Salmon Fillet",
+      "food_category": "MEAT_SEAFOOD",
+      "predicted_demand": 526,
+      "planned_production": 547,
+      "actual_waste_kg": 6.6,
+      "predicted_waste_kg": 10.7,
+      "waste_probability": 0.97,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-18",
+      "food_item": "Braised Prime Beef Short Ribs",
+      "food_category": "MEAT_SEAFOOD",
+      "predicted_demand": 589,
+      "planned_production": 663,
+      "actual_waste_kg": 35.3,
+      "predicted_waste_kg": 27.7,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-18",
+      "food_item": "Garden Mixed Greens & Baby Spinach",
+      "food_category": "VEGETABLES",
+      "predicted_demand": 766,
+      "planned_production": 853,
+      "actual_waste_kg": 37.8,
+      "predicted_waste_kg": 37.1,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-19",
+      "food_item": "Artisan Sourdough Rolls & Baguettes",
+      "food_category": "BAKERY",
+      "predicted_demand": 237,
+      "planned_production": 262,
+      "actual_waste_kg": 0.3,
+      "predicted_waste_kg": 11.4,
+      "waste_probability": 0.97,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-19",
+      "food_item": "Lemon Rosemary Grilled Chicken Breast",
+      "food_category": "MEAT_SEAFOOD",
+      "predicted_demand": 636,
+      "planned_production": 711,
+      "actual_waste_kg": 31.8,
+      "predicted_waste_kg": 27.7,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-20",
+      "food_item": "Greek Yogurt & Fresh Berry Parfait",
+      "food_category": "DAIRY",
+      "predicted_demand": 439,
+      "planned_production": 497,
+      "actual_waste_kg": 44.0,
+      "predicted_waste_kg": 36.9,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-20",
+      "food_item": "Tuscan Penne alla Vodka",
+      "food_category": "GRAINS_PASTA",
+      "predicted_demand": 473,
+      "planned_production": 608,
+      "actual_waste_kg": 60.3,
+      "predicted_waste_kg": 62.7,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-21",
+      "food_item": "Steamed Seasonal Market Vegetables",
+      "food_category": "VEGETABLES",
+      "predicted_demand": 469,
+      "planned_production": 488,
+      "actual_waste_kg": 16.9,
+      "predicted_waste_kg": 20.3,
+      "waste_probability": 0.99,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-21",
+      "food_item": "Steamed Saffron Basmati Rice Pilaf",
+      "food_category": "GRAINS_PASTA",
+      "predicted_demand": 383,
+      "planned_production": 416,
+      "actual_waste_kg": 14.2,
+      "predicted_waste_kg": 20.2,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-22",
+      "food_item": "Artisan Four-Cheese Beef Lasagna",
+      "food_category": "GRAINS_PASTA",
+      "predicted_demand": 610,
+      "planned_production": 627,
+      "actual_waste_kg": 12.5,
+      "predicted_waste_kg": 9.6,
+      "waste_probability": 0.99,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-22",
+      "food_item": "Roasted Mediterranean Ratatouille",
+      "food_category": "VEGETABLES",
+      "predicted_demand": 516,
+      "planned_production": 562,
+      "actual_waste_kg": 19.1,
+      "predicted_waste_kg": 18.4,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-23",
+      "food_item": "Herb-Crusted Atlantic Salmon Fillet",
+      "food_category": "MEAT_SEAFOOD",
+      "predicted_demand": 615,
+      "planned_production": 679,
+      "actual_waste_kg": 25.3,
+      "predicted_waste_kg": 22.0,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-23",
+      "food_item": "Creamy Wild Mushroom Soup",
+      "food_category": "PREPARED_SOUP",
+      "predicted_demand": 508,
+      "planned_production": 535,
+      "actual_waste_kg": 10.1,
+      "predicted_waste_kg": 11.5,
+      "waste_probability": 0.88,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-24",
+      "food_item": "Garden Mixed Greens & Baby Spinach",
+      "food_category": "VEGETABLES",
+      "predicted_demand": 707,
+      "planned_production": 777,
+      "actual_waste_kg": 27.9,
+      "predicted_waste_kg": 26.8,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-24",
+      "food_item": "Braised Prime Beef Short Ribs",
+      "food_category": "MEAT_SEAFOOD",
+      "predicted_demand": 743,
+      "planned_production": 844,
+      "actual_waste_kg": 40.9,
+      "predicted_waste_kg": 37.6,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-25",
+      "food_item": "Artisan Sourdough Rolls & Baguettes",
+      "food_category": "BAKERY",
+      "predicted_demand": 672,
+      "planned_production": 723,
+      "actual_waste_kg": 31.0,
+      "predicted_waste_kg": 20.7,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-25",
+      "food_item": "Lemon Rosemary Grilled Chicken Breast",
+      "food_category": "MEAT_SEAFOOD",
+      "predicted_demand": 700,
+      "planned_production": 797,
+      "actual_waste_kg": 31.6,
+      "predicted_waste_kg": 37.9,
+      "waste_probability": 1.0,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-26",
+      "food_item": "Greek Yogurt & Fresh Berry Parfait",
+      "food_category": "DAIRY",
+      "predicted_demand": 400,
+      "planned_production": 431,
+      "actual_waste_kg": 14.7,
+      "predicted_waste_kg": 11.9,
+      "waste_probability": 0.99,
+      "risk_level": "HIGH"
+    },
+    {
+      "date": "2026-03-26",
+      "food_item": "Tuscan Penne alla Vodka",
+      "food_category": "GRAINS_PASTA",
+      "predicted_demand": 408,
+      "planned_production": 419,
+      "actual_waste_kg": 0.0,
+      "predicted_waste_kg": 6.7,
+      "waste_probability": 0.91,
+      "risk_level": "HIGH"
+    }
+  ],
+  "status": "PRODUCTION_ACTIVE"
+}

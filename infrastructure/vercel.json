@@ -1,0 +1,11 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/.next",
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "https://foodloop-backend-api.onrender.com/api/v1/:path*"
+    }
+  ]
+}
