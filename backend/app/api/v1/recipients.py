@@ -69,6 +69,21 @@ def register_recipient(
     return rec
 
 
+def _verify_ngo_recipient_access(rec: Recipient, user: dict):
+    from app.core.security import normalize_role
+    user_role = normalize_role(user.get("role", ""))
+    if user_role in ["ADMIN", "AUDITOR"]:
+        return True
+    user_org_id = user.get("organization_id")
+    if user_role in ["NGO", "RECIPIENT"]:
+        if str(rec.organization_id) != str(user_org_id) and rec.id != user.get("id"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: You do not have permission to access another NGO's private recipient data."
+            )
+    return True
+
+
 @router.get("/{recipient_id}", response_model=RecipientOut)
 def get_recipient(
     recipient_id: str,
@@ -77,7 +92,9 @@ def get_recipient(
 ):
     """Retrieves recipient details."""
     repo = BaseRepository(Recipient, db)
-    return repo.get_or_404(recipient_id, "Recipient")
+    rec = repo.get_or_404(recipient_id, "Recipient")
+    _verify_ngo_recipient_access(rec, user)
+    return rec
 
 
 @router.get("/{recipient_id}/requirements", response_model=RecipientRequirementOut)
@@ -87,6 +104,9 @@ def get_recipient_requirements(
     user: dict = Depends(get_current_user)
 ):
     """Retrieves food safety and dietary intake criteria for a recipient."""
+    rec = db.query(Recipient).filter(Recipient.id == recipient_id).first()
+    if rec:
+        _verify_ngo_recipient_access(rec, user)
     req = db.query(RecipientRequirement).filter(RecipientRequirement.recipient_id == recipient_id).first()
     if not req:
         # Auto-create if missing
@@ -105,6 +125,9 @@ def update_recipient_requirements(
     user: dict = Depends(RoleChecker(["ADMIN", "NGO"]))
 ):
     """Updates intake dietary constraints and max distance tolerances."""
+    rec = db.query(Recipient).filter(Recipient.id == recipient_id).first()
+    if rec:
+        _verify_ngo_recipient_access(rec, user)
     req = db.query(RecipientRequirement).filter(RecipientRequirement.recipient_id == recipient_id).first()
     if not req:
         req = RecipientRequirement(recipient_id=recipient_id, **req_in.model_dump())
@@ -140,6 +163,8 @@ def get_recipient_dashboard(
     ).first()
     if not rec:
         raise HTTPException(status_code=404, detail="Recipient organization not found")
+
+    _verify_ngo_recipient_access(rec, user)
 
     rec_real_id = rec.id
 

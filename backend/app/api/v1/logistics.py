@@ -272,13 +272,33 @@ def transition_delivery_status(
     if not deliv:
         raise NotFoundError(f"Delivery mission '{delivery_id}' not found.", code="DELIVERY_NOT_FOUND")
 
+    current_st = deliv.status.upper()
+    # Terminal delivery state immutability
+    if current_st in ["DELIVERED", "CANCELLED", "RECEIVED"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Terminal delivery state immutable: Delivery '{delivery_id}' is already {current_st} and cannot be modified."
+        )
+
+    # Driver ownership check (Prevent IDOR)
+    user_role = (user.get("role") or "").upper().strip()
+    if user_role == "DRIVER":
+        drv_rec = db.query(Driver).filter(Driver.user_id == user.get("id")).first()
+        valid_ids = [user.get("id")]
+        if drv_rec:
+            valid_ids.append(drv_rec.id)
+        if deliv.driver_id and deliv.driver_id not in valid_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: You cannot modify a delivery assigned to another driver."
+            )
+
     new_st = transition.new_status.upper()
     if new_st not in LOGISTICS_STATUSES:
         raise ValidationError(
             f"Invalid status '{new_st}'. Must be one of: {', '.join(LOGISTICS_STATUSES)}"
         )
 
-    current_st = deliv.status.upper()
     allowed = VALID_TRANSITIONS.get(current_st, [])
 
     # Allow idempotent transition or admin override
@@ -343,6 +363,26 @@ def submit_proof_of_delivery(
     deliv = db.query(Delivery).filter(Delivery.id == delivery_id).first()
     if not deliv:
         raise NotFoundError(f"Delivery mission '{delivery_id}' not found.", code="DELIVERY_NOT_FOUND")
+
+    # Terminal delivery state immutability
+    if deliv.status.upper() in ["DELIVERED", "CANCELLED", "RECEIVED"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Terminal delivery state immutable: Delivery '{delivery_id}' is already {deliv.status} and proof of delivery cannot be re-submitted."
+        )
+
+    # Driver ownership check (Prevent IDOR)
+    user_role = (user.get("role") or "").upper().strip()
+    if user_role == "DRIVER":
+        drv_rec = db.query(Driver).filter(Driver.user_id == user.get("id")).first()
+        valid_ids = [user.get("id")]
+        if drv_rec:
+            valid_ids.append(drv_rec.id)
+        if deliv.driver_id and deliv.driver_id not in valid_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: You cannot submit proof of delivery for another driver's mission."
+            )
 
     now = datetime.now(timezone.utc)
     deliv.status = "DELIVERED"

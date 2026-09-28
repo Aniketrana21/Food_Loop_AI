@@ -84,6 +84,15 @@ def update_organization(
     user: dict = Depends(RoleChecker(["ADMIN", "KITCHEN_MANAGER"]))
 ):
     """Updates organization profile."""
+    from app.core.security import normalize_role
+    from fastapi import HTTPException
+    user_role = normalize_role(user.get("role", ""))
+    if user_role not in ["ADMIN", "AUDITOR"]:
+        if str(user.get("organization_id")) != str(org_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: You cannot modify another organization's profile."
+            )
     repo = BaseRepository(Organization, db)
     return repo.update(org_id, **org_in.model_dump(exclude_unset=True))
 
@@ -95,6 +104,15 @@ def list_org_members(
     user: dict = Depends(get_current_user)
 ):
     """Lists members belonging to an organization."""
+    from app.core.security import normalize_role
+    from fastapi import HTTPException
+    user_role = normalize_role(user.get("role", ""))
+    if user_role not in ["ADMIN", "AUDITOR"]:
+        if str(user.get("organization_id")) != str(org_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: You cannot view the member roster of another organization."
+            )
     return db.query(OrganizationMember).filter(OrganizationMember.organization_id == org_id).all()
 
 
@@ -106,6 +124,16 @@ def add_org_member(
     user: dict = Depends(RoleChecker(["ADMIN", "KITCHEN_MANAGER"]))
 ):
     """Adds a user to the organization membership roster."""
+    from app.core.security import normalize_role
+    from fastapi import HTTPException
+    user_role = normalize_role(user.get("role", ""))
+    if user_role not in ["ADMIN", "AUDITOR"]:
+        if str(user.get("organization_id")) != str(org_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: You cannot add members to another organization."
+            )
+
     existing = db.query(OrganizationMember).filter(
         OrganizationMember.organization_id == org_id,
         OrganizationMember.user_id == member_in.user_id

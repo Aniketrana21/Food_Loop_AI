@@ -1498,6 +1498,23 @@ class DonationItem(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 
+    # Compatibility properties for Pydantic serialization
+    @property
+    def quantity_kg(self):
+        return self.allocated_quantity_kg
+
+    @quantity_kg.setter
+    def quantity_kg(self, value):
+        self.allocated_quantity_kg = value
+
+    @property
+    def portions(self):
+        return self.allocated_portions
+
+    @portions.setter
+    def portions(self, value):
+        self.allocated_portions = value
+
     # Relationships
     donation = relationship("Donation", back_populates="items")
     surplus_item = relationship("SurplusItem", back_populates="donation_items")
@@ -1736,11 +1753,13 @@ class Notification(Base):
     is_read = Column(Boolean, default=False, nullable=False)
     read_at = Column(DateTime, nullable=True)
     action_url = Column(String(255), nullable=True)
+    event_id = Column(String(36), ForeignKey("notification_events.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
     user = relationship("User", back_populates="notifications")
     organization = relationship("Organization")
+    event = relationship("NotificationEvent", foreign_keys=[event_id])
 
 
 class ModelPrediction(Base):
@@ -1963,3 +1982,69 @@ class SystemBusinessRule(Base):
 
     # Relationships
     updated_by = relationship("User")
+
+
+class NotificationPreference(Base):
+    __tablename__ = "notification_preferences"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    in_app_enabled = Column(Boolean, default=True, nullable=False)
+    email_enabled = Column(Boolean, default=True, nullable=False)
+    push_enabled = Column(Boolean, default=True, nullable=False)
+    email_address = Column(String(255), nullable=True)
+    push_token = Column(Text, nullable=True)
+    quiet_hours_enabled = Column(Boolean, default=False, nullable=False)
+    quiet_hours_start = Column(String(5), default="22:00", nullable=False)
+    quiet_hours_end = Column(String(5), default="07:00", nullable=False)
+    event_overrides = Column(JSON, default=dict, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # Relationships
+    user = relationship("User")
+
+
+class NotificationTemplate(Base):
+    __tablename__ = "notification_templates"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    event_type = Column(String(100), unique=True, nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    title_template = Column(String(255), nullable=False)
+    in_app_template = Column(Text, nullable=False)
+    email_subject_template = Column(String(255), nullable=True)
+    email_body_template = Column(Text, nullable=True)
+    push_title_template = Column(String(255), nullable=True)
+    push_body_template = Column(String(255), nullable=True)
+    default_priority = Column(String(50), default="NORMAL", nullable=False)  # LOW, NORMAL, HIGH, CRITICAL
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class NotificationEvent(Base):
+    __tablename__ = "notification_events"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    event_type = Column(String(100), index=True, nullable=False)
+    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    idempotency_key = Column(String(255), index=True, nullable=True)
+    payload = Column(JSON, nullable=False, default=dict)
+    channels = Column(JSON, nullable=False, default=list)  # ["in_app", "email", "push"]
+    status = Column(String(50), default="PENDING", nullable=False)  # PENDING, DELIVERED, PARTIALLY_DELIVERED, FAILED, RETRYING, DEDUPLICATED, SUPPRESSED_QUIET_HOURS
+    attempts = Column(Integer, default=0, nullable=False)
+    max_retries = Column(Integer, default=3, nullable=False)
+    last_error = Column(Text, nullable=True)
+    rendered_title = Column(String(255), nullable=True)
+    rendered_body = Column(Text, nullable=True)
+    channel_delivery_results = Column(JSON, default=dict, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    sent_at = Column(DateTime, nullable=True)
+    next_retry_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    organization = relationship("Organization")
+    user = relationship("User")

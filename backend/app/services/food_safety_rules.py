@@ -165,10 +165,24 @@ def evaluate_food_safety(
                 reasons.append(
                     f"WARNING: Freezer temperature of {temp_val:.1f}°C is warmer than {cfg.frozen_max_temp_c}°C target."
                 )
+        elif norm_storage == "ROOM_TEMP":
+            if norm_cat not in ["BAKERY", "DRY_GOODS"] and temp_val > 25.0:
+                temp_violation = True
+                reasons.append(
+                    f"CRITICAL TEMPERATURE ABUSE: Perishable {norm_cat} held at elevated ambient temperature of {temp_val:.1f}°C (>25°C Danger Zone)."
+                )
 
     # 3. Calculate Age & Remaining Time Window
     if prepared_at:
-        prep_dt = prepared_at.replace(tzinfo=timezone.utc) if prepared_at.tzinfo is None else prepared_at
+        if isinstance(prepared_at, str):
+            try:
+                prep_dt = datetime.fromisoformat(prepared_at.replace("Z", "+00:00"))
+            except Exception:
+                prep_dt = now
+        else:
+            prep_dt = prepared_at
+        if prep_dt.tzinfo is None:
+            prep_dt = prep_dt.replace(tzinfo=timezone.utc)
         age_seconds = (now - prep_dt).total_seconds()
         age_hours = max(0.0, age_seconds / 3600.0)
     else:
@@ -179,7 +193,15 @@ def evaluate_food_safety(
 
     # 4. Factor in best_use_before if explicitly set
     if best_use_before:
-        bub_dt = best_use_before.replace(tzinfo=timezone.utc) if best_use_before.tzinfo is None else best_use_before
+        if isinstance(best_use_before, str):
+            try:
+                bub_dt = datetime.fromisoformat(best_use_before.replace("Z", "+00:00"))
+            except Exception:
+                bub_dt = now
+        else:
+            bub_dt = best_use_before
+        if bub_dt.tzinfo is None:
+            bub_dt = bub_dt.replace(tzinfo=timezone.utc)
         bub_remaining_hours = (bub_dt - now).total_seconds() / 3600.0
         if bub_remaining_hours < remaining_hours:
             remaining_hours = bub_remaining_hours

@@ -78,19 +78,39 @@ def get_donation(
     return donation
 
 
+from app.core.security import get_current_user, RoleChecker, security_bearer, HTTPAuthorizationCredentials
+from app.utils.exceptions import (
+    UnauthorizedScannerError,
+    InvalidStateTransitionError,
+    ValidationError,
+    NotFoundError
+)
+from fastapi import HTTPException
+
+
 @router.patch("/{donation_id}/status", response_model=DonationOut)
 def update_donation_status(
     donation_id: str,
     new_status: str = Query(..., pattern="^(DONATION_CREATED|ACCEPTED|PICKUP_ASSIGNED|PICKED_UP|IN_TRANSIT|DELIVERED|RECEIVED|DECLARED|MATCHED|COURIER_ASSIGNED|CANCELLED)$"),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer),
     db: Session = Depends(get_db),
     user: dict = Depends(RoleChecker(["ADMIN", "KITCHEN_MANAGER", "DRIVER", "NGO", "LOGISTICS_MANAGER"]))
 ):
     """Updates donation custody stage enforcing RBAC and state machine constraints."""
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication credentials required to update donation custody.",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
     service = CustodyService(db)
     try:
         updated = service.transition_status(donation_id, new_status, user=user)
         return updated
-    except Exception:
-        # Fall back to base repository update for legacy compatibility if needed
-        repo = DonationRepository(db)
-        return repo.update(donation_id, status=new_status)
+    except (UnauthorizedScannerError, PermissionError) as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except (InvalidStateTransitionError, ValidationError) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except NotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

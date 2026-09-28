@@ -44,7 +44,11 @@ def list_inventory(
         query = query.filter(Inventory.expiry_date <= threshold)
 
     if params.search:
-        query = query.filter(Inventory.item_name.ilike(f"%{params.search}%"))
+        from app.models.models import Ingredient
+        query = query.join(Ingredient, Inventory.ingredient_id == Ingredient.id).filter(
+            (Ingredient.name.ilike(f"%{params.search}%")) |
+            (Inventory.lot_number.ilike(f"%{params.search}%"))
+        )
 
     from app.utils.pagination import paginate_query
     return paginate_query(query, params, model_class=Inventory)
@@ -258,6 +262,21 @@ def adjust_inventory_stock(
     Deducts or adds quantity atomically and updates transaction ledger.
     """
     repo = InventoryRepository(db)
+    inv = repo.get_or_404(inventory_id, "Inventory")
+
+    # Multi-Tenant Isolation Check
+    from app.core.security import normalize_role
+    from fastapi import HTTPException
+    user_role = normalize_role(user.get("role", ""))
+    if user_role not in ["ADMIN", "AUDITOR"]:
+        user_org_id = user.get("organization_id")
+        inv_org_id = inv.organization_id
+        if str(inv_org_id) != str(user_org_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: You cannot adjust inventory belonging to another organization."
+            )
+
     return repo.adjust_stock(
         inventory_id=inventory_id,
         quantity_change=adj_in.quantity_change,

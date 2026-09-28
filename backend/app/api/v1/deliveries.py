@@ -73,6 +73,32 @@ def update_delivery(
 ):
     """Updates delivery transit telemetry, temperatures, and proof of delivery."""
     repo = BaseRepository(Delivery, db)
+    deliv = repo.get_or_404(delivery_id, "Delivery")
+
+    # Terminal delivery state immutability
+    if deliv.status.upper() in ["DELIVERED", "CANCELLED", "RECEIVED"]:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Terminal delivery state immutable: Delivery '{delivery_id}' is already {deliv.status} and cannot be modified."
+        )
+
+    # Driver ownership authorization check (Prevent IDOR)
+    from app.core.security import normalize_role
+    user_role = normalize_role(user.get("role", ""))
+    if user_role == "DRIVER":
+        from fastapi import HTTPException
+        from app.models.models import Driver
+        drv_rec = db.query(Driver).filter(Driver.user_id == user.get("id")).first()
+        valid_ids = [user.get("id")]
+        if drv_rec:
+            valid_ids.append(drv_rec.id)
+        if deliv.driver_id and deliv.driver_id not in valid_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access Denied: You cannot modify a delivery assigned to another driver."
+            )
+
     return repo.update(delivery_id, **deliv_in.model_dump(exclude_unset=True))
 
 

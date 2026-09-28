@@ -95,7 +95,7 @@ def get_current_user(
             token,
             settings.SECRET_KEY,
             algorithms=["HS256"],
-            options={"verify_signature": False}  # Allows Supabase JWT token decoding in hybrid modes
+            options={"verify_signature": True}
         )
         user_metadata = payload.get("user_metadata", {})
         app_metadata = payload.get("app_metadata", {})

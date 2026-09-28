@@ -1,10 +1,15 @@
 version: '3.8'
 
 # ==============================================================================
-# FoodLoop AI - Infrastructure Docker Compose Stack
+# FoodLoop AI - Local Development Full-Stack Orchestration
+# Starts PostgreSQL (PostGIS), FastAPI Backend, and Next.js Frontend with one command:
+#   docker compose up --build
 # ==============================================================================
 
 services:
+  # ----------------------------------------------------------------------------
+  # 1. Database Service (PostgreSQL 16 + PostGIS 3.4 Spatial Extensions)
+  # ----------------------------------------------------------------------------
   db:
     image: postgis/postgis:16-3.4
     container_name: foodloop_postgres
@@ -17,8 +22,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-      - ../database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-foodloop}"]
       interval: 5s
@@ -27,10 +32,13 @@ services:
     networks:
       - foodloop_network
 
+  # ----------------------------------------------------------------------------
+  # 2. Backend API Service (FastAPI + ML Engine)
+  # ----------------------------------------------------------------------------
   backend:
     build:
-      context: ..
-      dockerfile: infrastructure/Dockerfile.backend
+      context: .
+      dockerfile: Dockerfile
     container_name: foodloop_backend
     restart: unless-stopped
     depends_on:
@@ -58,12 +66,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 10s
     networks:
       - foodloop_network
 
+  # ----------------------------------------------------------------------------
+  # 3. Frontend Web Application (Next.js 14)
+  # ----------------------------------------------------------------------------
   frontend:
     build:
-      context: ../frontend
+      context: ./frontend
       dockerfile: ../infrastructure/Dockerfile.frontend
     container_name: foodloop_frontend
     restart: unless-stopped
@@ -83,6 +95,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
+      start_period: 15s
     networks:
       - foodloop_network
 

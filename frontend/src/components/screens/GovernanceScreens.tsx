@@ -53,97 +53,12 @@ export const ImpactDashboardScreen: React.FC<GovernanceProps> = ({ onNavigate, o
 export { ImpactAnalyticsScreen };
 
 // -------------------------------------------------------------
-// 2. NOTIFICATIONS SCREEN
+// 2. NOTIFICATIONS SCREEN (PHASE 17 CENTRALIZED HUB)
 // -------------------------------------------------------------
+import { NotificationsHubScreen } from '@/components/notifications';
+
 export const NotificationsScreen: React.FC<GovernanceProps> = ({ onNavigate, onShowSuccess }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(MOCK_NOTIFICATIONS);
-  const [activeTab, setActiveTab] = useState('all');
-
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    onShowSuccess('All notifications marked as read.');
-  };
-
-  const filtered = notifications.filter((n) => {
-    if (activeTab === 'all') return true;
-    return n.category === activeTab;
-  });
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-5 rounded-3xl border border-white/10 bg-slate-900">
-        <div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="purple" size="sm">Notification Center</Badge>
-            <span className="text-xs text-slate-400">Real-Time Operational Alerts</span>
-          </div>
-          <h1 className="text-2xl font-black text-white tracking-tight mt-1">Platform Activity & Alerts</h1>
-          <p className="text-xs text-slate-400">Critical temperature thresholds, expiry warnings, and courier arrivals</p>
-        </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleMarkAllRead}
-          leftIcon={<CheckCircle2 className="w-3.5 h-3.5" />}
-        >
-          Mark All as Read
-        </Button>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-1">
-        {['all', 'urgent', 'logistics', 'production', 'audit'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all ${
-              activeTab === tab
-                ? 'bg-emerald-500 text-slate-950 font-bold'
-                : 'glass-panel text-slate-400 hover:text-white'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Notifications List */}
-      <div className="space-y-3">
-        {filtered.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => {
-              if (item.actionTarget) onNavigate(item.actionTarget as any);
-            }}
-            className={`p-4 rounded-2xl border transition-all flex items-start justify-between gap-4 cursor-pointer ${
-              item.read
-                ? 'bg-slate-900/60 border-white/5 hover:border-white/10'
-                : 'bg-slate-900 border-emerald-500/30 hover:border-emerald-500/50 shadow-md'
-            }`}
-          >
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                {!item.read && <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />}
-                <span className="font-bold text-xs sm:text-sm text-white">{item.title}</span>
-                <Badge
-                  variant={item.category === 'urgent' ? 'danger' : item.category === 'logistics' ? 'cyan' : 'neutral'}
-                  size="sm"
-                >
-                  {item.category}
-                </Badge>
-              </div>
-              <p className="text-xs text-slate-400">{item.message}</p>
-            </div>
-
-            <span className="text-[11px] text-slate-500 font-mono whitespace-nowrap shrink-0">
-              {item.timestamp}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  return <NotificationsHubScreen onNavigate={onNavigate} onShowSuccess={onShowSuccess} />;
 };
 
 // -------------------------------------------------------------

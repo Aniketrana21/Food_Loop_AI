@@ -66,12 +66,17 @@ def register_profile(profile_in: ProfileCreate, db: Session = Depends(get_db)):
     if existing:
         raise ConflictError("A user with this email address already exists.", code="USER_ALREADY_EXISTS")
 
+    requested_role = normalize_role(profile_in.role)
+    # Privilege Escalation Defense: Public registration cannot grant administrative roles
+    if requested_role in ["ADMIN", "AUDITOR"]:
+        requested_role = "KITCHEN_MANAGER"
+
     pwd_hash = hash_password("DemoSafePass2026!")
     user = User(
         email=profile_in.email,
         password_hash=pwd_hash,
         full_name=profile_in.full_name,
-        role=normalize_role(profile_in.role),
+        role=requested_role,
         phone=profile_in.phone,
         avatar_url=profile_in.avatar_url,
         is_active=True
@@ -122,6 +127,9 @@ def demo_login(role: str = "donor", db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
+    else:
+        user.role = role
+        db.commit()
 
     token = create_access_token({
         "sub": user.id,
