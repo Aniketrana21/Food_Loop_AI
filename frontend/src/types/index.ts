@@ -1301,3 +1301,387 @@ export interface VisionBenchmarkReport {
   per_class_metrics: Record<string, { precision: number; recall: number; f1: number; support: number }>;
   disclaimer: string;
 }
+
+// =====================================================================
+// PHASE 14 — FOOD PROCESSING UNIT (FPU) & FEFO TYPES
+// =====================================================================
+
+export interface FpuRawMaterialItem {
+  id: string;
+  processing_unit_id: string;
+  material_name: string;
+  category: string;
+  lot_number: string;
+  initial_quantity: number;
+  current_quantity: number;
+  unit: string;
+  storage_condition: string;
+  storage_location: string;
+  harvest_or_mfg_date: string;
+  expiry_date: string;
+  quality_status: 'APPROVED' | 'UNDER_REVIEW' | 'REJECTED' | 'QUARANTINED';
+  packaging_condition: 'INTACT' | 'DAMAGED_PACKAGING' | 'LEAKING' | 'SEAL_COMPROMISED';
+  damaged_quantity: number;
+  rejection_reason?: string | null;
+  disposition_action?: string | null;
+  supplier?: string | null;
+  cost_per_unit: number;
+  status: 'AVAILABLE' | 'ALLOCATED' | 'DEPLETED' | 'EXPIRED' | 'QUARANTINED' | 'REJECTED';
+  days_to_expiry: number;
+  expiry_urgency_tier: 'EXPIRED' | 'CRITICAL_1_DAY' | 'URGENT_3_DAYS' | 'WARNING_7_DAYS' | 'OPTIMAL';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FpuBatchMaterialUsage {
+  id: string;
+  raw_material_id: string;
+  raw_material_name: string;
+  lot_number: string;
+  quantity_used: number;
+  unit: string;
+  fefo_sequence_order: number;
+  lot_expiry_at_consumption: string;
+}
+
+export interface FpuProductionBatchItem {
+  id: string;
+  processing_unit_id: string;
+  batch_number: string;
+  product_name: string;
+  category: string;
+  planned_quantity: number;
+  actual_quantity: number;
+  unit: string;
+  manufacturing_date: string;
+  expiry_date: string;
+  quality_status: 'PASSED' | 'UNDER_REVIEW' | 'REJECTED' | 'DAMAGED_PACKAGING' | 'QUARANTINED';
+  packaging_condition: 'INTACT' | 'DAMAGED_PACKAGING' | 'SEAL_FAILURE' | 'DEFECTIVE_LABEL' | 'DENTED_CONTAINER';
+  damaged_packaging_units: number;
+  rejected_quantity: number;
+  rejection_reason?: string | null;
+  disposition_action?: string | null;
+  yield_percentage: number;
+  surplus_quantity: number;
+  redistributable_stock: number;
+  redistribution_status: 'NOT_DECLARED' | 'AVAILABLE_FOR_REDISTRIBUTION' | 'ALLOCATED_TO_DONATION' | 'DISPATCHED' | 'DELIVERED';
+  status: 'PLANNED' | 'IN_PRODUCTION' | 'QUALITY_CONTROL' | 'COMPLETED' | 'QUARANTINED' | 'REJECTED';
+  operator_notes?: string | null;
+  qc_officer?: string | null;
+  created_at: string;
+  updated_at: string;
+  raw_materials_used: FpuBatchMaterialUsage[];
+  days_to_expiry: number;
+  expiry_urgency_tier: string;
+}
+
+export interface FefoPickItem {
+  raw_material_id: string;
+  lot_number: string;
+  material_name: string;
+  category: string;
+  storage_location: string;
+  expiry_date: string;
+  days_to_expiry: number;
+  lot_available_quantity: number;
+  allocated_quantity: number;
+  remaining_in_lot: number;
+  unit: string;
+  fefo_sequence: number;
+}
+
+export interface FefoAllocationResult {
+  material_name?: string;
+  required_quantity: number;
+  total_allocated: number;
+  is_fulfilled: boolean;
+  shortage_quantity: number;
+  fefo_compliance_score: number;
+  pick_list: FefoPickItem[];
+  reasoning: string[];
+}
+
+export interface FefoQueueItem {
+  raw_material_id: string;
+  lot_number: string;
+  material_name: string;
+  category: string;
+  current_quantity: number;
+  unit: string;
+  storage_location: string;
+  expiry_date: string;
+  days_to_expiry: number;
+  urgency_tier: string;
+  fefo_priority_rank: number;
+  quality_status: string;
+  packaging_condition: string;
+}
+
+export interface FpuAlertItem {
+  alert_id: string;
+  item_type: 'RAW_MATERIAL' | 'PRODUCTION_BATCH';
+  item_id: string;
+  code: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  manufacturing_or_harvest_date: string;
+  expiry_date: string;
+  days_remaining: number;
+  alert_severity: 'EXPIRED' | 'CRITICAL_1_DAY' | 'URGENT_3_DAYS' | 'WARNING_7_DAYS' | 'DAMAGED_PACKAGING';
+  applicable_rule: string;
+  threshold_days_used: number;
+  quality_status: string;
+  packaging_condition: string;
+  recommended_action: string;
+}
+
+export interface FpuAlertsSummary {
+  total_alerts: number;
+  expired_count: number;
+  critical_count: number;
+  urgent_count: number;
+  warning_count: number;
+  quality_defects_count: number;
+  alerts: FpuAlertItem[];
+}
+
+export interface FpuThresholdRule {
+  id: string;
+  target_type: 'CATEGORY' | 'PRODUCT' | 'RAW_MATERIAL';
+  target_name: string;
+  warning_threshold_days: number;
+  urgent_threshold_days: number;
+  critical_threshold_days: number;
+  custom_safety_notes?: string | null;
+  is_active: boolean;
+}
+
+export interface TraceabilityNode {
+  step: number;
+  stage: 'RAW_MATERIAL' | 'PRODUCTION_BATCH' | 'FINISHED_PRODUCT' | 'SURPLUS_DONATION' | 'RECIPIENT';
+  identifier: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  timestamp?: string;
+  quality_status: string;
+  packaging_condition?: string;
+  facility_or_org: string;
+  details: Record<string, any>;
+}
+
+export interface FpuTraceabilityChain {
+  query_identifier: string;
+  root_stage: string;
+  summary: string;
+  raw_materials: Array<Record<string, any>>;
+  production_batch?: Record<string, any>;
+  finished_product?: Record<string, any>;
+  surplus_donation?: Record<string, any>;
+  recipient?: Record<string, any>;
+  linear_trace_steps: TraceabilityNode[];
+}
+
+export interface FpuDashboardData {
+  processing_unit_id: string;
+  processing_unit_name: string;
+  processing_type: string;
+  inventory: {
+    total_raw_material_kg: number;
+    total_finished_product_kg: number;
+    total_inventory_kg: number;
+    total_raw_lots_count: number;
+    total_active_batches_count: number;
+    estimated_inventory_value_usd: number;
+  };
+  near_expiry: {
+    total_near_expiry_count: number;
+    total_near_expiry_kg: number;
+    warning_7d_count: number;
+    urgent_3d_count: number;
+    critical_1d_count: number;
+    items: FpuAlertItem[];
+  };
+  expired: {
+    total_expired_count: number;
+    total_expired_kg: number;
+    quarantined_count: number;
+    items: FpuAlertItem[];
+  };
+  production: {
+    total_batches_all_time: number;
+    completed_batches_count: number;
+    active_in_production_count: number;
+    total_yield_kg: number;
+    average_yield_percentage: number;
+    fefo_adherence_percentage: number;
+  };
+  rejected: {
+    rejected_products_count: number;
+    total_rejected_kg: number;
+    damaged_packaging_incidents: number;
+    damaged_units_count: number;
+    by_disposition: Record<string, number>;
+    by_rejection_reason: Record<string, number>;
+  };
+  redistributable_stock: {
+    total_surplus_generated_kg: number;
+    current_redistributable_stock_kg: number;
+    allocated_to_donations_kg: number;
+    dispatched_to_recipients_kg: number;
+    active_recipient_partners_count: number;
+    redistributable_batches_count: number;
+  };
+}
+
+// -------------------------------------------------------------
+// PHASE 15: SUSTAINABILITY IMPACT ANALYTICS ENGINE
+// -------------------------------------------------------------
+
+export interface EmissionFactorItem {
+  id: string;
+  organization_id?: string | null;
+  category: string;
+  co2e_kg_per_kg_food: number;
+  water_liters_per_kg_food: number;
+  landfill_diversion_m3_per_kg: number;
+  meal_equivalent_kg: number;
+  people_served_per_meal: number;
+  economic_value_usd_per_kg: number;
+  production_cost_factor_per_kg: number;
+  documentation_source: string;
+  notes?: string | null;
+  is_estimate: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface EmissionFactorCreatePayload {
+  organization_id?: string | null;
+  category: string;
+  co2e_kg_per_kg_food: number;
+  water_liters_per_kg_food: number;
+  landfill_diversion_m3_per_kg: number;
+  meal_equivalent_kg: number;
+  people_served_per_meal: number;
+  economic_value_usd_per_kg: number;
+  production_cost_factor_per_kg: number;
+  documentation_source: string;
+  notes?: string | null;
+}
+
+export interface ImpactKpiMetrics {
+  food_rescued_kg: number;
+  food_waste_kg: number;
+  waste_reduction_percentage: number;
+  meals_equivalent: number;
+  people_served: number;
+  estimated_value_preserved_usd: number;
+  production_cost_saved_usd: number;
+  redistribution_count: number;
+  successful_deliveries: number;
+  failed_deliveries: number;
+  delivery_success_rate_pct: number;
+  average_pickup_time_minutes: number;
+  co2e_avoided_kg: number;
+  water_saved_liters: number;
+  landfill_diverted_m3: number;
+  is_environmental_estimate: boolean;
+  environmental_estimate_disclaimer: string;
+}
+
+export interface WasteTrendPoint {
+  date: string;
+  waste_kg: number;
+  target_threshold_kg: number;
+  diverted_kg: number;
+}
+
+export interface FoodRescuedPoint {
+  date: string;
+  rescued_kg: number;
+  meals_equivalent: number;
+  people_served: number;
+}
+
+export interface CategoryBreakdownItem {
+  category: string;
+  rescued_kg: number;
+  waste_kg: number;
+  co2e_avoided_kg: number;
+  value_usd: number;
+  percentage_of_total: number;
+}
+
+export interface KitchenComparisonItem {
+  kitchen_id: string;
+  kitchen_name: string;
+  organization_name: string;
+  food_rescued_kg: number;
+  food_waste_kg: number;
+  waste_reduction_pct: number;
+  efficiency_score: number;
+  successful_deliveries: number;
+}
+
+export interface RedistributionTrendPoint {
+  date: string;
+  redistribution_count: number;
+  volume_kg: number;
+  meals_provided: number;
+}
+
+export interface ForecastVsActualPoint {
+  date: string;
+  predicted_waste_kg: number;
+  actual_waste_kg: number;
+  variance_kg: number;
+  variance_pct: number;
+}
+
+export interface CostTrendPoint {
+  date: string;
+  value_preserved_usd: number;
+  production_cost_saved_usd: number;
+  waste_loss_usd: number;
+  net_benefit_usd: number;
+}
+
+export interface OperationalEfficiencyPoint {
+  date: string;
+  avg_pickup_time_mins: number;
+  delivery_success_rate_pct: number;
+  total_deliveries: number;
+  failed_deliveries: number;
+}
+
+export interface ImpactChartsData {
+  waste_trend: WasteTrendPoint[];
+  food_rescued: FoodRescuedPoint[];
+  category_breakdown: CategoryBreakdownItem[];
+  kitchen_comparison: KitchenComparisonItem[];
+  redistribution_trend: RedistributionTrendPoint[];
+  forecast_vs_actual: ForecastVsActualPoint[];
+  cost_trend: CostTrendPoint[];
+  operational_efficiency: OperationalEfficiencyPoint[];
+}
+
+export interface ImpactFilterOptions {
+  organizations: { id: string; name: string }[];
+  kitchens: { id: string; name: string }[];
+  categories: string[];
+  granularities: string[];
+}
+
+export interface ImpactAnalyticsResponse {
+  time_granularity: string;
+  date_range: { start?: string; end?: string };
+  filters_applied: Record<string, any>;
+  kpis: ImpactKpiMetrics;
+  charts: ImpactChartsData;
+  emission_factors: EmissionFactorItem[];
+  environmental_estimate_disclaimer: string;
+}
+

@@ -45,6 +45,8 @@ import { Modal } from '@/components/design-system/Modal';
 import { AIRecommendationCard } from '@/components/design-system/AIRecommendationCard';
 import { ScreenId } from '@/components/navigation/Sidebar';
 import { RecipientDashboardScreen } from './RecipientDashboardScreen';
+import { FoodProcessingUnitScreen } from './FoodProcessingUnitScreen';
+import { AdminDashboardScreen } from '@/components/admin';
 import { 
   KPI_METRICS_DATA, 
   MOCK_PRODUCTION_BATCHES, 
@@ -1017,229 +1019,34 @@ export const KitchenDashboard: React.FC<DashboardProps> = ({
 };
 
 // -------------------------------------------------------------
-// 2. ADMIN DASHBOARD (System Governance & Multi-Facility)
+// 2. ADMIN DASHBOARD (System Governance & Multi-Facility - Phase 16)
 // -------------------------------------------------------------
-export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
-  const tenants = [
-    { name: 'Grand Hyatt Culinary', type: 'Luxury Hotel', mealsRescued: '14,200', wasteDiverted: '92.4%', status: 'Active' },
-    { name: 'Stanford University Dining', type: 'Higher Education', mealsRescued: '28,450', wasteDiverted: '88.1%', status: 'Active' },
-    { name: 'Salesforce Tower Cafe 42', type: 'Corporate Dining', mealsRescued: '8,900', wasteDiverted: '94.8%', status: 'Active' },
-    { name: 'Bay Area Canning & Puree Plant', type: 'Industrial FPU', mealsRescued: '51,130', wasteDiverted: '96.2%', status: 'Active' },
-  ];
-
+export const AdminDashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenDonateModal, onShowSuccess }) => {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-5 rounded-3xl border border-white/10 bg-slate-900">
-        <div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="danger" size="sm">Super Admin Console</Badge>
-            <span className="text-xs text-slate-400">Multi-Facility Telemetry</span>
-          </div>
-          <h1 className="text-2xl font-black text-white tracking-tight mt-1">Platform Enterprise Governance</h1>
-          <p className="text-xs text-slate-400">Aggregated redistribution metrics across 24 connected hospitality & institutional hubs</p>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onNavigate('audit_logs')}
-            leftIcon={<ShieldCheck className="w-3.5 h-3.5" />}
-          >
-            Audit Logs
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => onNavigate('impact_dashboard')}
-            leftIcon={<Activity className="w-3.5 h-3.5" />}
-          >
-            ESG Reporting
-          </Button>
-        </div>
-      </div>
-
-      {/* Admin KPI Ribbon */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          title="Active Kitchens"
-          value="48"
-          unit="facilities"
-          trend={{ percentage: 8.5, isPositive: true }}
-          icon={<Building2 className="w-5 h-5" />}
-          accentColor="emerald"
-        />
-        <KpiCard
-          title="Participating NGOs"
-          value="114"
-          unit="food banks"
-          trend={{ percentage: 14.0, isPositive: true }}
-          icon={<HeartHandshake className="w-5 h-5" />}
-          accentColor="indigo"
-        />
-        <KpiCard
-          title="Dispatched Couriers"
-          value="32"
-          unit="vehicles active"
-          trend={{ percentage: 4.2, isPositive: true }}
-          icon={<Truck className="w-5 h-5" />}
-          accentColor="cyan"
-        />
-        <KpiCard
-          title="Platform Uptime"
-          value="99.98"
-          unit="%"
-          trend={{ percentage: 0.1, isPositive: true }}
-          icon={<Server className="w-5 h-5" />}
-          accentColor="amber"
-        />
-      </div>
-
-      {/* Facility Leaderboard Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Connected Facility Operations</CardTitle>
-          <CardDescription>Live throughput and waste diversion ratings</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left text-slate-300">
-              <thead className="text-[11px] uppercase tracking-wider text-slate-400 border-b border-white/10">
-                <tr>
-                  <th className="py-3 px-4">Organization</th>
-                  <th className="py-3 px-4">Classification</th>
-                  <th className="py-3 px-4">Meals Rescued</th>
-                  <th className="py-3 px-4">Diversion Rate</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {tenants.map((t, idx) => (
-                  <tr key={idx} className="hover:bg-white/5">
-                    <td className="py-3 px-4 font-bold text-white">{t.name}</td>
-                    <td className="py-3 px-4">{t.type}</td>
-                    <td className="py-3 px-4 font-mono">{t.mealsRescued}</td>
-                    <td className="py-3 px-4 text-emerald-400 font-bold">{t.wasteDiverted}</td>
-                    <td className="py-3 px-4">
-                      <Badge variant="success" size="sm">{t.status}</Badge>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => onNavigate('kitchen_dashboard')}
-                        className="text-emerald-400 hover:text-emerald-300 font-semibold"
-                      >
-                        Inspect &rarr;
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <AdminDashboardScreen
+      onNavigate={onNavigate}
+      onOpenDonateModal={onOpenDonateModal}
+      onShowSuccess={onShowSuccess}
+    />
   );
 };
+
+export { AdminDashboardScreen };
 
 // -------------------------------------------------------------
 // 3. PROCESSING UNIT DASHBOARD (FPU - Food Processing Units)
 // -------------------------------------------------------------
-export const ProcessingDashboard: React.FC<DashboardProps> = ({ onNavigate, onShowSuccess }) => {
-  const [tankCapacity, setTankCapacity] = useState(68);
-
+export const ProcessingDashboard: React.FC<DashboardProps> = ({ onNavigate, onShowSuccess, onOpenDonateModal }) => {
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-5 rounded-3xl border border-white/10 bg-slate-900">
-        <div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="warning" size="sm">FPU Plant Console</Badge>
-            <span className="text-xs text-slate-400">Bay Area Canning & Puree Plant #02</span>
-          </div>
-          <h1 className="text-2xl font-black text-white tracking-tight mt-1">Industrial Processing & Valorization</h1>
-          <p className="text-xs text-slate-400">High-capacity byproduct upcycling, bulk canning, and secondary food manufacturing</p>
-        </div>
-
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => {
-            setTankCapacity(82);
-            onShowSuccess('New 500kg tomato puree intake logged to Cold Tank A.');
-          }}
-          leftIcon={<PlusCircle className="w-3.5 h-3.5" />}
-        >
-          Intake Bulk Batch
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Processing Tank Gauges */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Aseptic Puree Tank A</CardTitle>
-            <CardDescription>Cold-storage volume status</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-baseline justify-between">
-              <span className="text-3xl font-black text-white">{tankCapacity}%</span>
-              <span className="text-xs text-slate-400 font-mono">3,400 / 5,000 L</span>
-            </div>
-            <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
-              <div className="bg-amber-500 h-full rounded-full transition-all duration-500" style={{ width: `${tankCapacity}%` }} />
-            </div>
-            <p className="text-[11px] text-slate-400">
-              Receiving surplus Roma tomatoes from institutional kitchens. Scheduled for steam sterilization at 14:00.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Industrial Dehydration Line */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Dehydration Line B</CardTitle>
-            <CardDescription>Fruit & Vegetable Powdering</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-baseline justify-between">
-              <span className="text-3xl font-black text-white">420 kg</span>
-              <span className="text-xs text-emerald-400 font-bold">Line Active (62°C)</span>
-            </div>
-            <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: '84%' }} />
-            </div>
-            <p className="text-[11px] text-slate-400">
-              Converting day-old bakery trimmings into certified organic breadcrumb flour bases.
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* EPA Hierarchy Valorization */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Valorization Diversion</CardTitle>
-            <CardDescription>Industrial EPA tier allocation</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-xs">
-            <div className="flex justify-between items-center p-2 rounded-xl bg-slate-900 border border-white/5">
-              <span>Human Secondary Products</span>
-              <span className="font-bold text-emerald-400">72.4%</span>
-            </div>
-            <div className="flex justify-between items-center p-2 rounded-xl bg-slate-900 border border-white/5">
-              <span>Animal Feed Enrichment</span>
-              <span className="font-bold text-amber-400">19.2%</span>
-            </div>
-            <div className="flex justify-between items-center p-2 rounded-xl bg-slate-900 border border-white/5">
-              <span>Anaerobic Biogas Digest</span>
-              <span className="font-bold text-indigo-400">8.4%</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <FoodProcessingUnitScreen
+      onNavigate={onNavigate}
+      onShowSuccess={onShowSuccess}
+      onOpenDonateModal={onOpenDonateModal}
+    />
   );
 };
+
+export { FoodProcessingUnitScreen };
 
 // -------------------------------------------------------------
 // 4. NGO DASHBOARD (Recipient Food Banks & Soup Kitchens)

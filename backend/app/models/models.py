@@ -79,6 +79,7 @@ class Organization(Base):
     contact_email = Column(String(255), nullable=False)
     contact_phone = Column(String(50), nullable=False)
     is_verified = Column(Boolean, default=True, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     deleted_at = Column(DateTime, nullable=True)
@@ -248,6 +249,165 @@ class ProcessingUnit(Base):
     # Relationships
     organization = relationship("Organization", back_populates="processing_units")
     inventory = relationship("Inventory", back_populates="processing_unit", cascade="all, delete-orphan")
+    raw_materials = relationship("FpuRawMaterial", back_populates="processing_unit", cascade="all, delete-orphan")
+    production_batches = relationship("FpuProductionBatch", back_populates="processing_unit", cascade="all, delete-orphan")
+    alert_thresholds = relationship("FpuExpiryAlertThreshold", back_populates="processing_unit", cascade="all, delete-orphan")
+
+    # Compatibility properties for Phase 3 & Phase 14 schemas
+    @property
+    def unit_type(self):
+        return self.processing_type
+
+    @unit_type.setter
+    def unit_type(self, val):
+        self.processing_type = val
+
+    @property
+    def daily_throughput_capacity_kg(self):
+        return self.daily_capacity_kg
+
+    @daily_throughput_capacity_kg.setter
+    def daily_throughput_capacity_kg(self, val):
+        self.daily_capacity_kg = val
+
+    @property
+    def contact_person(self):
+        return getattr(self, "_contact_person", "Facility Lead")
+
+    @contact_person.setter
+    def contact_person(self, val):
+        self._contact_person = val
+
+    @property
+    def contact_phone(self):
+        return getattr(self, "_contact_phone", "+1-555-4000")
+
+    @contact_phone.setter
+    def contact_phone(self, val):
+        self._contact_phone = val
+
+    @property
+    def accepted_feedstocks(self):
+        return getattr(self, "_accepted_feedstocks", ["PRODUCE", "GRAINS", "DAIRY"])
+
+    @accepted_feedstocks.setter
+    def accepted_feedstocks(self, val):
+        self._accepted_feedstocks = val
+
+    @property
+    def output_products(self):
+        return getattr(self, "_output_products", ["PUREE", "CANNED_GOODS", "DEHYDRATED"])
+
+    @output_products.setter
+    def output_products(self, val):
+        self._output_products = val
+
+
+# ====================================================================
+# 2B. FOOD PROCESSING UNIT (PHASE 14) MODELS
+# ====================================================================
+
+class FpuRawMaterial(Base):
+    __tablename__ = "fpu_raw_materials"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    processing_unit_id = Column(String(36), ForeignKey("processing_units.id", ondelete="CASCADE"), nullable=False)
+    material_name = Column(String(255), nullable=False, index=True)
+    category = Column(String(100), nullable=False, default="PRODUCE")  # PRODUCE, GRAINS, DAIRY, LIQUIDS, PACKAGING, SEASONINGS, BAKERY_TRIMMINGS, MEAT
+    lot_number = Column(String(100), nullable=False, index=True)
+    initial_quantity = Column(Float, nullable=False)
+    current_quantity = Column(Float, nullable=False)
+    unit = Column(String(50), default="kg", nullable=False)
+    storage_condition = Column(String(100), default="REFRIGERATED", nullable=False)  # REFRIGERATED, DRY_STORAGE, FROZEN, AMBIENT
+    storage_location = Column(String(100), default="Cold Storage Bay 1", nullable=False)
+    harvest_or_mfg_date = Column(DateTime, nullable=False)
+    expiry_date = Column(DateTime, nullable=False, index=True)
+    quality_status = Column(String(50), default="APPROVED", nullable=False)  # APPROVED, UNDER_REVIEW, REJECTED, QUARANTINED
+    packaging_condition = Column(String(50), default="INTACT", nullable=False)  # INTACT, DAMAGED_PACKAGING, LEAKING, SEAL_COMPROMISED
+    damaged_quantity = Column(Float, default=0.0, nullable=False)
+    rejection_reason = Column(Text, nullable=True)
+    disposition_action = Column(String(100), nullable=True)  # ANIMAL_FEED_VALORIZATION, COMPOSTING, SAFE_DISPOSAL, RETURN_SUPPLIER
+    supplier = Column(String(255), nullable=True)
+    cost_per_unit = Column(Float, default=0.0, nullable=False)
+    status = Column(String(50), default="AVAILABLE", nullable=False)  # AVAILABLE, ALLOCATED, DEPLETED, EXPIRED, QUARANTINED, REJECTED
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # Relationships
+    processing_unit = relationship("ProcessingUnit", back_populates="raw_materials")
+    usages = relationship("FpuBatchMaterialUsage", back_populates="raw_material", cascade="all, delete-orphan")
+
+
+class FpuProductionBatch(Base):
+    __tablename__ = "fpu_production_batches"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    processing_unit_id = Column(String(36), ForeignKey("processing_units.id", ondelete="CASCADE"), nullable=False)
+    batch_number = Column(String(100), unique=True, nullable=False, index=True)
+    product_name = Column(String(255), nullable=False, index=True)
+    category = Column(String(100), default="PROCESSED_CANNING", nullable=False)  # PROCESSED_CANNING, DEHYDRATED, PUREE, BAKERY_REPROCESSED, JUICE_BEVERAGE, VALUE_ADDED
+    planned_quantity = Column(Float, nullable=False)
+    actual_quantity = Column(Float, default=0.0, nullable=False)
+    unit = Column(String(50), default="kg", nullable=False)
+    manufacturing_date = Column(DateTime, nullable=False)
+    expiry_date = Column(DateTime, nullable=False, index=True)
+    quality_status = Column(String(50), default="PASSED", nullable=False)  # PASSED, UNDER_REVIEW, REJECTED, DAMAGED_PACKAGING, QUARANTINED
+    packaging_condition = Column(String(50), default="INTACT", nullable=False)  # INTACT, DAMAGED_PACKAGING, SEAL_FAILURE, DEFECTIVE_LABEL, DENTED_CONTAINER
+    damaged_packaging_units = Column(Float, default=0.0, nullable=False)
+    rejected_quantity = Column(Float, default=0.0, nullable=False)
+    rejection_reason = Column(Text, nullable=True)
+    disposition_action = Column(String(100), nullable=True)  # RE_PROCESS, ANIMAL_FEED_VALORIZATION, COMPOST_BIOGAS, HAZARDOUS_DISPOSAL
+    yield_percentage = Column(Float, default=100.0, nullable=False)
+    surplus_quantity = Column(Float, default=0.0, nullable=False)
+    redistributable_stock = Column(Float, default=0.0, nullable=False)
+    redistribution_status = Column(String(50), default="NOT_DECLARED", nullable=False)  # NOT_DECLARED, AVAILABLE_FOR_REDISTRIBUTION, ALLOCATED_TO_DONATION, DISPATCHED, DELIVERED
+    status = Column(String(50), default="COMPLETED", nullable=False)  # PLANNED, IN_PRODUCTION, QUALITY_CONTROL, COMPLETED, QUARANTINED, REJECTED
+    operator_notes = Column(Text, nullable=True)
+    qc_officer = Column(String(255), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # Relationships
+    processing_unit = relationship("ProcessingUnit", back_populates="production_batches")
+    raw_material_usages = relationship("FpuBatchMaterialUsage", back_populates="batch", cascade="all, delete-orphan")
+    surplus_items = relationship("SurplusItem", back_populates="fpu_batch")
+
+
+class FpuBatchMaterialUsage(Base):
+    __tablename__ = "fpu_batch_material_usages"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    batch_id = Column(String(36), ForeignKey("fpu_production_batches.id", ondelete="CASCADE"), nullable=False)
+    raw_material_id = Column(String(36), ForeignKey("fpu_raw_materials.id", ondelete="RESTRICT"), nullable=False)
+    quantity_used = Column(Float, nullable=False)
+    unit = Column(String(50), default="kg", nullable=False)
+    fefo_sequence_order = Column(Integer, default=1, nullable=False)
+    lot_expiry_at_consumption = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # Relationships
+    batch = relationship("FpuProductionBatch", back_populates="raw_material_usages")
+    raw_material = relationship("FpuRawMaterial", back_populates="usages")
+
+
+class FpuExpiryAlertThreshold(Base):
+    __tablename__ = "fpu_expiry_alert_thresholds"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)
+    processing_unit_id = Column(String(36), ForeignKey("processing_units.id", ondelete="CASCADE"), nullable=True)
+    target_type = Column(String(50), default="CATEGORY", nullable=False)  # CATEGORY, PRODUCT, RAW_MATERIAL
+    target_name = Column(String(100), nullable=False)  # DAIRY, PRODUCE, CANNED_GOODS, etc.
+    warning_threshold_days = Column(Float, default=7.0, nullable=False)  # e.g., 7 days
+    urgent_threshold_days = Column(Float, default=3.0, nullable=False)   # e.g., 3 days
+    critical_threshold_days = Column(Float, default=1.0, nullable=False) # e.g., 1 day
+    is_active = Column(Boolean, default=True, nullable=False)
+    custom_safety_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # Relationships
+    processing_unit = relationship("ProcessingUnit", back_populates="alert_thresholds")
 
 
 # ====================================================================
@@ -1088,10 +1248,15 @@ class SurplusItem(Base):
     pickup_scheduled_time = Column(DateTime, nullable=True)
     pickup_driver_notes = Column(Text, nullable=True)
 
+    # Phase 14 Food Processing Unit Traceability Link
+    fpu_batch_id = Column(String(36), ForeignKey("fpu_production_batches.id", ondelete="SET NULL"), nullable=True)
+
     # Relationships
     organization = relationship("Organization", back_populates="surplus_items")
+    kitchen = relationship("Kitchen")
     donation_items = relationship("DonationItem", back_populates="surplus_item", cascade="all, delete-orphan")
     allocated_recipient = relationship("Recipient", foreign_keys=[allocated_recipient_id])
+    fpu_batch = relationship("FpuProductionBatch", back_populates="surplus_items")
 
     # Compatibility alias properties
     @property
@@ -1642,6 +1807,38 @@ class ImpactMetric(Base):
     # Relationships
     organization = relationship("Organization")
 
+    # Compatibility properties
+    @property
+    def co2_kg_saved(self):
+        return self.co2e_avoided_kg
+
+    @property
+    def water_liters_saved(self):
+        return self.water_saved_liters
+
+
+class ImpactEmissionFactor(Base):
+    __tablename__ = "impact_emission_factors"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    organization_id = Column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True)  # NULL = global default benchmark
+    category = Column(String(50), default="DEFAULT", nullable=False)  # PRODUCE, DAIRY, MEAT_POULTRY, BAKERY, PREPARED_MEALS, SEAFOOD, GRAINS_DRY, DEFAULT
+    co2e_kg_per_kg_food = Column(Float, default=2.5, nullable=False)  # EPA WARM baseline default 2.5 kg CO2e / kg food
+    water_liters_per_kg_food = Column(Float, default=1850.0, nullable=False)  # Average agricultural lifecycle water footprint
+    landfill_diversion_m3_per_kg = Column(Float, default=0.0015, nullable=False)  # Landfill compaction factor
+    meal_equivalent_kg = Column(Float, default=0.42, nullable=False)  # USDA / Feeding America standard meal portion (approx 0.42 kg)
+    people_served_per_meal = Column(Float, default=1.0, nullable=False)
+    economic_value_usd_per_kg = Column(Float, default=5.50, nullable=False)  # Average retail value of rescued food ($5.50/kg)
+    production_cost_factor_per_kg = Column(Float, default=3.25, nullable=False)  # Avoided cost of re-procurement / labor
+    documentation_source = Column(String(255), default="EPA WARM v15 (2023) / FAO Food Wastage Footprint / Feeding America Standard", nullable=False)
+    is_estimate = Column(Boolean, default=True, nullable=False)  # Explicitly labeled as estimate
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # Relationships
+    organization = relationship("Organization")
+
 
 class Document(Base):
     __tablename__ = "documents"
@@ -1748,3 +1945,21 @@ class VisionScan(Base):
     organization = relationship("Organization")
     kitchen = relationship("Kitchen")
     user = relationship("User")
+
+
+class SystemBusinessRule(Base):
+    __tablename__ = "system_business_rules"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    rule_key = Column(String(100), unique=True, nullable=False, index=True)
+    rule_name = Column(String(255), nullable=False)
+    category = Column(String(50), default="OPERATIONS", nullable=False)  # OPERATIONS, FOOD_SAFETY, ML_FORECAST, LOGISTICS, NOTIFICATIONS
+    value = Column(JSON, nullable=False)
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    updated_by_user_id = Column(String(36), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+    # Relationships
+    updated_by = relationship("User")

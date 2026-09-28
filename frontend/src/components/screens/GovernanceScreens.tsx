@@ -36,117 +36,21 @@ import {
 } from '@/lib/mockData';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
+import { ImpactAnalyticsScreen } from './ImpactAnalyticsScreen';
+
 interface GovernanceProps {
   onNavigate: (screen: ScreenId) => void;
   onShowSuccess: (msg: string) => void;
 }
 
 // -------------------------------------------------------------
-// 1. IMPACT DASHBOARD SCREEN
+// 1. IMPACT DASHBOARD SCREEN (PHASE 15: SUSTAINABILITY ANALYTICS ENGINE)
 // -------------------------------------------------------------
-export const ImpactDashboardScreen: React.FC<GovernanceProps> = ({ onShowSuccess }) => {
-  const [downloading, setDownloading] = useState(false);
-
-  const handleExportPDF = () => {
-    setDownloading(true);
-    setTimeout(() => {
-      setDownloading(false);
-      onShowSuccess('ESG / CSR Carbon Reduction Audit Report generated and downloaded.');
-    }, 1000);
-  };
-
-  const monthlyImpactData = [
-    { month: 'Apr', co2: 18.2, meals: 14200 },
-    { month: 'May', co2: 21.5, meals: 16800 },
-    { month: 'Jun', co2: 24.8, meals: 19400 },
-    { month: 'Jul', co2: 28.1, meals: 22100 },
-    { month: 'Aug', co2: 32.4, meals: 25600 },
-    { month: 'Sep', co2: 36.8, meals: 29400 },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-panel p-5 rounded-3xl border border-white/10 bg-slate-900">
-        <div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="emerald" size="sm">UN SDG 12.3 Aligned</Badge>
-            <span className="text-xs text-slate-400">Target: 50% Reduction by 2030</span>
-          </div>
-          <h1 className="text-2xl font-black text-white tracking-tight mt-1">Environmental & Social Impact Ledger</h1>
-          <p className="text-xs text-slate-400">EPA emission factors &bull; 2.5 kg CO₂e avoided per kg food diverted &bull; Water footprint metrics</p>
-        </div>
-
-        <Button
-          variant="primary"
-          size="sm"
-          isLoading={downloading}
-          onClick={handleExportPDF}
-          leftIcon={<Download className="w-3.5 h-3.5" />}
-        >
-          Export Certified CSR Audit (PDF)
-        </Button>
-      </div>
-
-      {/* 4 Environmental Pillars */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          title="GHG Avoided"
-          value="120.6"
-          unit="tonnes CO₂e"
-          trend={{ percentage: 21.0, isPositive: true }}
-          icon={<Leaf className="w-5 h-5" />}
-          accentColor="emerald"
-        />
-        <KpiCard
-          title="Water Preserved"
-          value="2.84"
-          unit="Million Liters"
-          trend={{ percentage: 17.5, isPositive: true }}
-          icon={<Droplets className="w-5 h-5" />}
-          accentColor="cyan"
-        />
-        <KpiCard
-          title="Economic Value"
-          value="$142,850"
-          unit="USD Saved"
-          trend={{ percentage: 16.4, isPositive: true }}
-          icon={<DollarSign className="w-5 h-5" />}
-          accentColor="amber"
-        />
-        <KpiCard
-          title="Meals Provided"
-          value="102,680"
-          unit="hot meals"
-          trend={{ percentage: 18.5, isPositive: true }}
-          icon={<Utensils className="w-5 h-5" />}
-          accentColor="indigo"
-        />
-      </div>
-
-      {/* Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Cumulative Environmental Avoidance (6-Month Trajectory)</CardTitle>
-          <CardDescription>Verified using EPA Waste Reduction Model (WARM v15)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyImpactData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={11} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '12px', fontSize: '11px' }}
-                />
-                <Bar dataKey="co2" name="CO₂e Avoided (Tonnes)" fill="#10b981" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+export const ImpactDashboardScreen: React.FC<GovernanceProps> = ({ onNavigate, onShowSuccess }) => {
+  return <ImpactAnalyticsScreen onNavigate={onNavigate} onShowSuccess={onShowSuccess} />;
 };
+
+export { ImpactAnalyticsScreen };
 
 // -------------------------------------------------------------
 // 2. NOTIFICATIONS SCREEN

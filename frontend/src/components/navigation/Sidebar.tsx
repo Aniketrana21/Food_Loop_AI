@@ -101,9 +101,9 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'processing_dashboard',
-    label: 'FPU Dashboard',
-    icon: <LayoutDashboard className="w-4 h-4" />,
-    allowedRoles: ['fpu_mgr'],
+    label: 'FPU Processing Plant',
+    icon: <Building2 className="w-4 h-4" />,
+    allowedRoles: ['fpu_mgr', 'super_admin', 'kitchen_mgr'],
     group: 'Operations',
   },
   {
